@@ -1,0 +1,109 @@
+WORKERS: 16
+MODEL_DIR: ./checkpoints
+RESULT_DIR: ./results
+LOG_DIR: ./log
+DATA_DIR: ./data/TACoS
+
+DATASET:
+  NAME: TACoS_RCNN
+  VIS_INPUT_TYPE: c3d
+  NO_VAL: False
+  NUM_SAMPLE_CLIPS: 256
+  TARGET_STRIDE: 2
+  NORMALIZE: True
+  RANDOM_SAMPLING: False
+  OBJECT_NUM: 36
+
+TEST:
+  BATCH_SIZE: 8
+  RECALL: 1,5
+  TIOU: 0.1,0.3,0.5,0.7
+  EVAL_TRAIN: False
+  NMS_THRESH: 0.5
+
+CUDNN:
+  DETERMINISTIC: False
+  BENCHMARK: True
+
+TRAIN:
+  BATCH_SIZE: 8
+  LR: 0.0001
+  WEIGHT_DECAY: 0.0000
+  MAX_EPOCH: 20
+  STEP_ACCUMULATE: 2
+  CONTINUE: False
+  FP16: False
+
+LOSS:
+  NAME: bce_rescale_loss
+  PARAMS:
+    MIN_IOU: 0.3
+    MAX_IOU: 0.7
+    BIAS: 0.0
+
+TAN:
+  TEXTUAL_MODULE:
+    NAME: MultiAttTextEncoding
+    PARAMS:
+      TXT_INPUT_SIZE: 300
+      TXT_HIDDEN_SIZE: 512
+      SEMANTIC_NUM: 1
+      RNN:
+        NUM_LAYERS: 3
+        BIDIRECTIONAL: True
+
+  OBJECT_MODULE:
+    NAME: ObjectTextInteraction
+    PARAMS:
+      REASONING: True
+      TEXT_ATT: True
+      MULTI_ATT: True
+      ATT_POOL: True
+      OBJECT_INPUT_SIZE: 2048
+      VIS_INPUT_SIZE: 4096
+      OBJECT_NUM: 36
+      HIDDEN_SIZE: 512
+      LAYER_NUM: 3
+      TEMPORAL_SHIFT: 1
+      BBOX_ENCODE: True
+      NORM: bn
+      TEMPORAL_CONV: 0
+      SENTINEL_VECTOR: True
+      SHIFT_SENTINEL_VECTOR: True
+
+  FRAME_MODULE:
+    NAME: FrameAvgPool
+    PARAMS:
+      INPUT_SIZE: 512
+      HIDDEN_SIZE: 512
+      KERNEL_SIZE: 2
+      STRIDE: 2
+
+  PROP_MODULE:
+    NAME: SparsePropMaxPool
+    PARAMS:
+      HIDDEN_SIZE: 512
+      NUM_SCALE_LAYERS: [16,8,8,8]
+
+  FUSION_MODULE:
+    NAME: EasyFusion
+    PARAMS:
+      HIDDEN_SIZE: 512
+      TXT_INPUT_SIZE: 300
+      TXT_HIDDEN_SIZE: 512
+
+  MAP_MODULE:
+    NAME: ResMapConv
+    PARAMS:
+      INPUT_SIZE: 512
+      NORM: True
+      HIDDEN_SIZES: [512, 512, 512, 512, 512, 512, 512, 512]
+      KERNEL_SIZES: [5, 5, 5, 5, 5, 5, 5, 5]
+      STRIDES: [1, 1, 1, 1, 1, 1, 1, 1]
+      PADDINGS: [2, 2, 2, 2, 2, 2, 2, 2]
+      DILATIONS: [1, 1, 1, 1, 1, 1, 1, 1]
+
+  PRED_INPUT_SIZE: 512
+
+MODEL:
+  NAME: LEORN
